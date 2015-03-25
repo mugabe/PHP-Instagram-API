@@ -57,9 +57,10 @@ class Proxy {
      * @param string $access_token The access token from authentication
      * @access public
      */
-    public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null ) {
+    public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null, $secret = null ) {
         $this->client = $client;
         $this->access_token = $access_token;
+        $this->secret = $secret;
     }
 
     /**
@@ -539,7 +540,8 @@ class Proxy {
             array(
                 'access_token'  => $this->access_token,
                 'client_id'     => isset( $params['client_id'] ) ? $params['client_id'] : $this->client_id
-            ) + (array) $params
+            ) + (array) $params,
+            $this->secret
         );
 
         $response = new \Instagram\Net\ApiResponse( $raw_response );

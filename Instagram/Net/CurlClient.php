@@ -39,7 +39,7 @@ class CurlClient implements ClientInterface {
      * @return \Instagram\Net\Response
      * @access public
      */
-    public function get( $url, array $data = null ){
+    public function get( $url, array $data = null, $secret = null ){
         curl_setopt( $this->curl, CURLOPT_CUSTOMREQUEST, 'GET' );
         curl_setopt( $this->curl, CURLOPT_URL, sprintf( "%s?%s", $url, http_build_query( $data ) ) );
         return $this->fetch();
@@ -53,10 +53,19 @@ class CurlClient implements ClientInterface {
      * @return \Instagram\Net\Response
      * @access public
      */
-    public function post( $url, array $data = null ) {
+    public function post( $url, array $data = null, $secret = null ) {
         curl_setopt( $this->curl, CURLOPT_CUSTOMREQUEST, 'POST' );
         curl_setopt( $this->curl, CURLOPT_URL, $url );
-        curl_setopt( $this->curl, CURLOPT_POSTFIELDS, http_build_query( $data ) );
+
+        if ($secret) {
+            $ip = @$_SERVER['REMOTE_ADDR'];
+            if (!$ip) $ip = '127.0.0.1';
+            $signature = hash_hmac('sha256', $ip, $secret, false);
+            curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('X-Insta-Forwarded-For: ' . $ip . '|' . $signature));
+        }
+
+        curl_setopt( $this->curl, CURLOPT_POSTFIELDS, http_build_query($data));
+
         return $this->fetch();
     }
 
@@ -68,7 +77,7 @@ class CurlClient implements ClientInterface {
      * @return \Instagram\Net\Response
      * @access public
      */
-    public function put( $url, array $data = null  ){
+    public function put( $url, array $data = null, $secret = null  ){
         curl_setopt( $this->curl, CURLOPT_CUSTOMREQUEST, 'PUT' );
     }
 
@@ -80,7 +89,7 @@ class CurlClient implements ClientInterface {
      * @return \Instagram\Net\Response
      * @access public
      */
-    public function delete( $url, array $data = null  ){
+    public function delete( $url, array $data = null, $secret = null  ){
         curl_setopt( $this->curl, CURLOPT_URL, sprintf( "%s?%s", $url, http_build_query( $data ) ) );
         curl_setopt( $this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE' );
         return $this->fetch();
@@ -109,12 +118,25 @@ class CurlClient implements ClientInterface {
      * @throws \Instagram\Core\ApiException
      */
     protected function fetch() {
+        //curl_setopt($this->curl, CURLOPT_HEADER, 1);
         $raw_response = curl_exec( $this->curl );
+        /*
+        list($header, $body) = explode("\r\n\r\n", $raw_response, 2);
+        $raw_response = $body;
+        $headers = explode("\r\n", $header);
+        $res_headers = array();
+        foreach ($headers as $header) {
+            if (substr($header, 0, 4) == 'HTTP') continue;
+            @list($header_key, $header_value) = explode(': ', $header, 2);
+            $res_headers[$header_key] = $header_value;
+        }
+        //print_r($headers);
+        echo "  -- ".@$res_headers['X-Ratelimit-Remaining']."\n";
+        */
         $error = curl_error( $this->curl );
         if ( $error ) {
             throw new \Instagram\Core\ApiException( $error, 666, 'CurlError' );
         }
         return $raw_response;
     }
-    
 }

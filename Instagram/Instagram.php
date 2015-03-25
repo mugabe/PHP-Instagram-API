@@ -36,8 +36,8 @@ class Instagram extends \Instagram\Core\BaseObjectAbstract {
      * @param \Instagram\Net\ClientInterface $client Client object used to connect to the API
      * @access public
      */
-    public function __construct( $access_token = null, \Instagram\Net\ClientInterface $client = null ) {
-        $this->proxy = new \Instagram\Core\Proxy( $client ?: new \Instagram\Net\CurlClient, $access_token ?: null );
+    public function __construct( $access_token = null, \Instagram\Net\ClientInterface $client = null, $secret = null ) {
+        $this->proxy = new \Instagram\Core\Proxy( $client ?: new \Instagram\Net\CurlClient, $access_token ?: null, $secret );
     }
 
     /**
